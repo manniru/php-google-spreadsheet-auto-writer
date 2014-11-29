@@ -1,184 +1,72 @@
 # Introduction
 
-This library provides a simple interface to the Google Spreadsheet API.
+This is simple PHP server program.
+Many pepole want to send data from small computer, such as Arduino to your Google SpreadSheet,
+A few years ago, it was simple. You can just add Google User ID and password.
+But now, Google allows only OAuth2 authentification.
 
-There are a couple of important things to note.
+If you have a small space on your own/rental servers with PHP and MySQL environment, you can become into 'gateway to Google Spread sheet'.
 
-* This library requires a valid OAuth access token to work but does not provide any means of generating one. The [Google APIs Client Library for PHP](https://github.com/google/google-api-php-client) has all the functionality required for for generating and refreshing tokens so it would have been a waste of time duplicating the official google library.
-* You can not create spreadsheets using this (PHP Google Spreadsheet Client) library, as creating spreadsheets is not part of the Spreadsheet API and the functionality already exists in the official Google Client Library.
+#Installation
+Your work as Host are;
 
-I strongly recommend you read through the [official Google Spreadsheet API documentation](https://developers.google.com/google-apps/spreadsheets) to get a grasp of the concepts.
+1. Register your Project in Google API console. Each step is described here. (https://developers.google.com/console/help/new/)
+   If you know more detail, read  (https://developers.google.com/accounts/docs/OAuth2) 
+
+2. In OAuth area, you may have Client ID, Client Secret, Redirect URL(You must specify).And you can specify Agrremtn screen contents.
+
+3. Create database table. Database location, database name is up to you. Table definition is as follows;
+   CREATE TABLE IF NOT EXISTS `glusers` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `google_user_id` varchar(50) DEFAULT NULL,
+  `google_email` varchar(255) DEFAULT NULL,
+  `google_name` varchar(255) DEFAULT NULL,
+  `google_access_token` varchar(255) DEFAULT NULL,
+  `google_refresh_token` varchar(255) DEFAULT NULL,
+  `google_expires_in`  smallint DEFAULT NULL,
+  `active_file_name` varchar(255) DEFAULT NULL,
+  `created` datetime DEFAULT NULL,
+  `used` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `google_user_id` (`google_user_id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
+
+4. Download this package. (I don't support composer.)
+
+5. Adjust 'config.php' constant values.
+	LANG - 'en' or 'jp'
+	DSN - Database environment like, 'mysql:dbname=xxxxx;host=localhost'
+	DB_USER - database user id.
+	DB_PASSWORD - database user password.
+	CLIENT-ID - you got it at step2.
+	CLIENT_SECRET - you got it at step2.
+	CALL_BACK - you got it at steop2.
+	SITE_URL - URL where you put these PHP programs.
+
+6. Upload all PHP files on your server space.
+
+7. try to access http://yourURL/gloggger/index.php
+
+8. You can specify Google Spreadsheet name. Default is 'glogger_test'
+
+9. Make sure $_GET['sheet'] default value in record.php.
+
+# Preparation
+You must make a spreadsheet. It must has two column name on the line 1.
+One is 'time' (case sensitive), the other one is basically 'data'.
+And FREEZE FIRST ROW as column name.
+To freeze;
+1. Goto the View menu.
+2. point Freeze Rows.
+3. Select one of the options. 'freeze 1 row'
 
 # Usage
+Once you register your Google account on the table by server setup programs, you can use record.php
 
-## Installation
+Basic format is; http://[yourURL]/glogger/record.php?email=[your registered mail address]&data=[nnnn]
 
-Using [composer](https://getcomposer.org/) is the recommended way to install it.
+Parameter email and data are required.
 
-1 - Add "asimlqt/php-google-spreadsheet-client" as a dependency in your project's composer.json file.
-
-```json
-{
-    "require": {
-        "asimlqt/php-google-spreadsheet-client": "2.2.*"
-    }
-}
-```
-
-2 - Download and install Composer.
-
-```
-curl -sS https://getcomposer.org/installer | php
-```
-
-3 - Install your dependencies.
-
-```
-php composer.phar install
-```
-
-4 - Require Composer's autoloader.
-
-```
-require 'vendor/autoload.php';
-```
-
-
-## Bootstrapping
-
-The first thing you will need to do is initialize the service request factory:
-
-```php
-use Google\Spreadsheet\DefaultServiceRequest;
-use Google\Spreadsheet\ServiceRequestFactory;
-
-$serviceRequest = new DefaultServiceRequest($accessToken);
-ServiceRequestFactory::setInstance($serviceRequest);
-```
-
-## Retrieving a list of spreadsheets
-
-```php
-$spreadsheetService = new Google\Spreadsheet\SpreadsheetService();
-$spreadsheetFeed = $spreadsheetService->getSpreadsheets();
-```
-
-SpreadsheetFeed implements ArrayIterator so you can iterate over it using a foreach loop or you can retrieve a single spreadsheet by name.
-
-```php
-$spreadsheet = $spreadsheetFeed->getByTitle('MySpreadsheet');
-```
-
-## Retrieving a list of worksheets
-
-You can retrieve a list of worksheets from a spreadsheet by calling the getWorksheets() method.
-
-```php
-$spreadsheetService = new Google\Spreadsheet\SpreadsheetService();
-$spreadsheetFeed = $spreadsheetService->getSpreadsheets();
-$spreadsheet = $spreadsheetFeed->getByTitle('MySpreadsheet');
-$worksheetFeed = $spreadsheet->getWorksheets();
-```
-
-You can loop over each worksheet or get a single worksheet by title.
-
-```php
-$worksheet = $worksheetFeed->getByTitle('Sheet 1');
-```
-
-## Adding a worksheet
-
-```php
-$spreadsheetService = new Google\Spreadsheet\SpreadsheetService();
-$spreadsheetFeed = $spreadsheetService->getSpreadsheets();
-$spreadsheet = $spreadsheetFeed->getByTitle('MySpreadsheet');
-$spreadsheet->addWorksheet('New Worksheet', 50, 20);
-```
-
-The only required parameter is the worksheet name, The row and column count are optional. The default value for rows is 100 and columns is 10.
-
-## Deleting a worksheet
-
-```php
-$spreadsheetService = new Google\Spreadsheet\SpreadsheetService();
-$spreadsheetFeed = $spreadsheetService->getSpreadsheets();
-$spreadsheet = $spreadsheetFeed->getByTitle('MySpreadsheet');
-$worksheetFeed = $spreadsheet->getWorksheets();
-$worksheet = $worksheetFeed->getByTitle('New Worksheet');
-$worksheet->delete();
-```
-
-## Working with list-based feeds
-
-### Retrieving a list-based feed
-
-```php
-$spreadsheetService = new Google\Spreadsheet\SpreadsheetService();
-$spreadsheetFeed = $spreadsheetService->getSpreadsheets();
-$spreadsheet = $spreadsheetFeed->getByTitle('MySpreadsheet');
-$worksheetFeed = $spreadsheet->getWorksheets();
-$worksheet = $worksheetFeed->getByTitle('Sheet 1');
-$listFeed = $worksheet->getListFeed();
-```
-
-Once you have a list feed you can loop over each entry.
-
-```php
-foreach ($listFeed->getEntries() as $entry) {
-	$values = $entry->getValues();
-}
-```
-
-The getValues() method returns an associative array where the keys are the column names and the values are the cell content.
-
-### Adding a list row
-
-```php
-$spreadsheetService = new Google\Spreadsheet\SpreadsheetService();
-$spreadsheetFeed = $spreadsheetService->getSpreadsheets();
-$spreadsheet = $spreadsheetFeed->getByTitle('MySpreadsheet');
-$worksheetFeed = $spreadsheet->getWorksheets();
-$worksheet = $worksheetFeed->getByTitle('Sheet 1');
-$listFeed = $worksheet->getListFeed();
-
-$row = array('name'=>'John', 'age'=>25);
-$listFeed->insert($row);
-```
-
-### Updating a list row
-
-```php
-$spreadsheetService = new Google\Spreadsheet\SpreadsheetService();
-$spreadsheetFeed = $spreadsheetService->getSpreadsheets();
-$spreadsheet = $spreadsheetFeed->getByTitle('MySpreadsheet');
-$worksheetFeed = $spreadsheet->getWorksheets();
-$worksheet = $worksheetFeed->getByTitle('Sheet 1');
-$listFeed = $worksheet->getListFeed();
-$entries = $listFeed->getEntries();
-$listEntry = $entries[0];
-
-$values = $listEntry->getValues();
-$values['name'] = 'Joe';
-$listEntry->update($values);
-```
-
-### Adding headers to a new worksheet
-
-The Google Spreadsheet API does not allow you to update a list row if headers are not already assigned. So, when you create a new worksheet, before you can add data to a worksheet using the 'Adding/Updating a list row' methods above, you need to add headers.
-
-To add headers to a worksheet, use the following:
-```php
-
-$spreadsheetService = new Google\Spreadsheet\SpreadsheetService();
-$spreadsheetFeed = $spreadsheetService->getSpreadsheets();
-$spreadsheet = $spreadsheetFeed->getByTitle('MySpreadsheet');
-$worksheetFeed = $spreadsheet->getWorksheets();
-$worksheet = $worksheetFeed->getByTitle('Sheet 1');
-$cellFeed = $worksheet->getCellFeed();
-
-$cellFeed->editCell(1,1, "Row1Col1Header");
-$cellFeed->editCell(1,2, "Row1Col2Header");
-$cellFeed->editCell(1,3, "Row1Col3Header");
-$cellFeed->editCell(1,4, "Row1Col4Header");
-
-```
+options:
+column= can change column name from data to other name as you like.
+sheet= can change sheet name. (Please give me good idea to change this default value. English and Japanese are diffrent.)
