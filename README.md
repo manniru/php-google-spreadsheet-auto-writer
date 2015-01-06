@@ -1,11 +1,12 @@
 # Introduction
 
-This is simple PHP server program.
-Many pepole want to send data from small computer, such as Arduino to your Google SpreadSheet,
+This is a simple PHP server program for upload data into Google SpreadSheet.
+Many pepole want to send data from small computer, such as Arduino and hopefully no charge.
 A few years ago, it was simple. You can just add Google User ID and password.
 But now, Google allows only OAuth2 authentification.
 
 If you have a small space on your own/rental servers with PHP and MySQL environment, you can become into 'gateway to Google Spread sheet'.
+This server program allow to use by others.
 
 #Installation
 Your work as Host are;
@@ -60,8 +61,10 @@ To freeze;
 2. point Freeze Rows.
 3. Select one of the options. 'freeze 1 row'
 
-# Usage
-Once you register your Google account on the table by server setup programs, you can use record.php
+By above action, Google spread sheet recognize first column as column name.
+
+# Client Usage
+Once you register your Google account on the table by server setup programs, you can use 'record.php'
 
 Basic format is; http://[yourURL]/glogger/record.php?email=[your registered mail address]&data=[nnnn]
 
@@ -70,3 +73,5 @@ Parameter email and data are required.
 options:
 column= can change column name from data to other name as you like.
 sheet= can change sheet name. (Please give me good idea to change this default value. English and Japanese are diffrent.)
+
+Enjoy !
